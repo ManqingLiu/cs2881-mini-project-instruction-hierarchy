@@ -51,6 +51,7 @@ class InstructionHierarchyDataGenerator:
             generator_model_name,
             trust_remote_code=True
         )
+        self.tokenizer.padding_side = 'left'
 
         # Set pad token to eos token if not set (fixes attention mask warning)
         if self.tokenizer.pad_token is None:

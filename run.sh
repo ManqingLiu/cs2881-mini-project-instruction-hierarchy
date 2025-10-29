@@ -6,7 +6,7 @@
 #SBATCH -t 6:00:00
 #SBATCH -p mit_normal_gpu
 #SBATCH --gres=gpu:h100:1
-#SBATCH --mem=15G
+#SBATCH --mem=32G
 
 cd $SLURM_SUBMIT_DIR
 # Get the directory where this script is located
@@ -60,4 +60,4 @@ source myenv/bin/activate
 # pip3 install -r requirements.txt
 
 
-python scripts/generate_data.py
+python -u scripts/generate_data.py
