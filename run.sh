@@ -3,40 +3,60 @@
 #SBATCH --output=experiments/results/output_%A_%a.txt
 #SBATCH --error=experiments/results/error_%A_%a.txt
 #SBATCH -c 10
-#SBATCH -t 20:00:00
-#SBATCH -p gpu_quad
-#SBATCH --gres=gpu:a100:1
+#SBATCH -t 6:00:00
+#SBATCH -p mit_normal_gpu
+#SBATCH --gres=gpu:h100:1
 #SBATCH --mem=15G
 
-# Set project directory
-PROJECT_DIR="/n/data2/hms/dbmi/beamlab/manqing/mini-project"
-export PYTHONPATH="${PYTHONPATH}:${PROJECT_DIR}"
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Use HF_HOME only (not TRANSFORMERS_CACHE - deprecated)
-export HF_HOME="${PROJECT_DIR}/hf_cache"
-export HF_DATASETS_CACHE="${PROJECT_DIR}/hf_cache/datasets"
-export TORCH_HOME="${PROJECT_DIR}/torch_cache"
+# Load configuration from config.json
+CONFIG_FILE="${SCRIPT_DIR}/config.json"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Error: config.json not found at $CONFIG_FILE"
+    echo "Please copy config.example.json to config.json and update with your settings"
+    exit 1
+fi
+
+# Parse JSON config using python
+PROJECT_DIR=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['project_dir'])")
+HF_HOME_TEMPLATE=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['cache_dirs']['hf_home'])")
+HF_DATASETS_TEMPLATE=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['cache_dirs']['hf_datasets'])")
+TORCH_HOME_TEMPLATE=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['cache_dirs']['torch_home'])")
+
+# Expand ${PROJECT_DIR} in template paths
+export HF_HOME="${HF_HOME_TEMPLATE//\$\{PROJECT_DIR\}/$PROJECT_DIR}"
+export HF_DATASETS_CACHE="${HF_DATASETS_TEMPLATE//\$\{PROJECT_DIR\}/$PROJECT_DIR}"
+export TORCH_HOME="${TORCH_HOME_TEMPLATE//\$\{PROJECT_DIR\}/$PROJECT_DIR}"
+
+# Set Python path
+export PYTHONPATH="${PYTHONPATH}:${PROJECT_DIR}"
 
 # Create cache directories
 mkdir -p $HF_HOME
 mkdir -p $HF_DATASETS_CACHE
 mkdir -p $TORCH_HOME
 
-export PYTHONPATH="${PYTHONPATH}:/n/data2/hms/dbmi/beamlab/manqing/mini-project"
+echo "Configuration loaded:"
+echo "  PROJECT_DIR: $PROJECT_DIR"
+echo "  HF_HOME: $HF_HOME"
+echo "  HF_DATASETS_CACHE: $HF_DATASETS_CACHE"
+echo "  TORCH_HOME: $TORCH_HOME"
 # Load modules FIRST - UNCOMMENT these lines and move them to the top
-module load gcc/14.2.0
-module load python/3.13.1
+# module load gcc/14.2.0
+# module load python/3.13.1
 #module load cuda/12.8
 
-#rm -rf myenv
+# rm -rf myenv
 #
 ## Create and activate the virtual environment
-#python3 -m venv myenv
+python3 -m venv myenv
 source myenv/bin/activate
 
 
 # Install requirements inside the virtual environment
-#pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 
 
-python src/generate_data.py
+python scripts/generate_data.py

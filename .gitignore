@@ -1,0 +1,41 @@
+# Configuration file with sensitive paths
+config.json
+
+# Virtual environment
+myenv/
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Generated data
+instruction_hierarchy_data/
+test_data/
+experiments/results/
+
+# Model cache directories
+hf_cache/
+torch_cache/
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/

@@ -1,0 +1,29 @@
+{
+  "project_dir": "/path/to/your/project/directory",
+  "output_dir": "./instruction_hierarchy_data",
+  "cache_dirs": {
+    "hf_home": "${PROJECT_DIR}/hf_cache",
+    "hf_datasets": "${PROJECT_DIR}/hf_cache/datasets",
+    "torch_home": "${PROJECT_DIR}/torch_cache"
+  },
+  "model_config": {
+    "generator_model": "Qwen/Qwen2.5-14B-Instruct",
+    "use_8bit": true,
+    "use_flash_attention": false
+  },
+  "generation_config": {
+    "num_aligned_open": 500,
+    "num_misaligned_open": 500,
+    "num_closed_domain": 500,
+    "num_indirect": 300,
+    "num_extraction": 400,
+    "use_public_data": true
+  },
+  "_comments": {
+    "project_dir": "Main directory for storing datasets and model weights. Update this to your cluster path.",
+    "output_dir": "Directory where generated datasets will be saved (relative to project root)",
+    "cache_dirs": "Cache directories for HuggingFace models/datasets and PyTorch. ${PROJECT_DIR} will be replaced with project_dir value",
+    "model_config": "Configuration for the generator model used to create synthetic data",
+    "generation_config": "Number of examples to generate for each attack category"
+  }
+}
