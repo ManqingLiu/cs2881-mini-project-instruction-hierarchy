@@ -8,8 +8,9 @@
 #SBATCH --gres=gpu:h100:1
 #SBATCH --mem=15G
 
+cd $SLURM_SUBMIT_DIR
 # Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR=$SLURM_SUBMIT_DIR
 
 # Load configuration from config.json
 CONFIG_FILE="${SCRIPT_DIR}/config.json"
@@ -45,18 +46,18 @@ echo "  HF_DATASETS_CACHE: $HF_DATASETS_CACHE"
 echo "  TORCH_HOME: $TORCH_HOME"
 # Load modules FIRST - UNCOMMENT these lines and move them to the top
 # module load gcc/14.2.0
-# module load python/3.13.1
 #module load cuda/12.8
+module load miniforge/24.3.0-0
 
 # rm -rf myenv
 #
 ## Create and activate the virtual environment
-python3 -m venv myenv
+# python3 -m venv myenv
 source myenv/bin/activate
 
 
 # Install requirements inside the virtual environment
-pip3 install -r requirements.txt
+# pip3 install -r requirements.txt
 
 
 python scripts/generate_data.py
