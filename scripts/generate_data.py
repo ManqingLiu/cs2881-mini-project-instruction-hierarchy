@@ -1300,7 +1300,7 @@ def main():
     all_data = generator.generate_all(
         num_aligned_open=500,
         num_misaligned_open=500,
-        num_closed_domain=50, # 500
+        num_closed_domain=800, # 500
         num_indirect=300,
         num_extraction=400,
         # use_public_data=True
