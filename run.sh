@@ -60,4 +60,7 @@ source myenv/bin/activate
 # pip3 install -r requirements.txt
 
 
-python -u scripts/generate_data.py
+# python -u scripts/generate_data.py
+python -u scripts/evaluate.py --model Qwen/Qwen2.5-14B-Instruct \
+                              --jailbreak_test \
+                              --judge_model Qwen/Qwen2.5-14B-Instruct --use_local_judge
