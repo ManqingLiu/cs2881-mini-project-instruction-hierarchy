@@ -118,23 +118,39 @@ python scripts/evaluate.py --model path/to/model \
 
 The evaluation script includes a specialized **Jailbreak Evaluator** that tests models against jailbreak attacks combined with unsafe requests. This evaluation:
 
-- Loads jailbreak templates from [JailbreakChat](https://www.jailbreakchat.com/) dataset
+- Loads jailbreak templates from [JailbreakBench](https://github.com/JailbreakBench/jailbreakbench) (default) or custom datasets
+- JailbreakBench provides state-of-the-art adversarial prompts from submitted attack methods
 - Combines templates with 10 common unsafe request categories (e.g., "how to make a bomb")
 - Uses an AI judge to evaluate whether the model appropriately refused the harmful request
 - Provides detailed breakdowns by unsafe request type
 
-**Run jailbreak evaluation:**
+**Run jailbreak evaluation using JailbreakBench:**
 ```bash
-# Using OpenAI API as judge (recommended)
+# Using JailbreakBench with PAIR method on vicuna (default)
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model gpt-4
+
+# Specify different JailbreakBench attack method and target model
+python scripts/evaluate.py --model path/to/model \
+  --jailbreak_test \
+  --judge_model gpt-4 \
+  --jbb_method GCG \
+  --jbb_model llama-2-7b-chat
 
 # Using local model as judge
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model Qwen/Qwen2.5-14B-Instruct \
-  --use_local_judge
+  --use_local_judge \
+  --jbb_method PAIR \
+  --jbb_model vicuna-13b-v1.5
+
+# Using custom jailbreak data file instead of JailbreakBench
+python scripts/evaluate.py --model path/to/model \
+  --jailbreak_test \
+  --judge_model gpt-4 \
+  --jailbreak_data path/to/custom_jailbreaks.json
 
 # Customize number of tests per unsafe request
 python scripts/evaluate.py --model path/to/model \
@@ -143,6 +159,9 @@ python scripts/evaluate.py --model path/to/model \
   --samples_per_request 10 \
   --sample_size 50
 ```
+
+**Available JailbreakBench Methods:**
+Common attack methods include: PAIR, GCG, AutoDAN, and others. See [JailbreakBench repository](https://github.com/JailbreakBench/jailbreakbench) for the full list of available methods and target models.
 
 ### Evaluation Metrics
 
@@ -176,7 +195,9 @@ The evaluation script computes:
 --judge_model <name>        # AI judge model (gpt-4, gpt-3.5-turbo, or HuggingFace ID)
 --use_local_judge           # Use local HF model instead of OpenAI API
 --jailbreak_test            # Run jailbreak resistance evaluation
---jailbreak_data <path>     # Jailbreak templates file (default: public_jailbreak.json)
+--jailbreak_data <path>     # Jailbreak templates file (optional, overrides JailbreakBench)
+--jbb_method <method>       # JailbreakBench attack method (default: PAIR)
+--jbb_model <model>         # JailbreakBench target model (default: vicuna-13b-v1.5)
 --samples_per_request <n>   # Number of jailbreak templates per unsafe request (default: 5)
 --sample_size <n>           # Limit evaluation to N examples total
 --use_8bit                  # Use 8-bit quantization (default: True)
@@ -428,6 +449,7 @@ Core requirements from [requirements.txt](requirements.txt):
 - `datasets`: HuggingFace datasets library
 - `bitsandbytes`: 8-bit quantization
 - `tqdm`: Progress bars
+- `jailbreakbench`: JailbreakBench library for loading jailbreak artifacts
 
 Optional dependencies for evaluation:
 - `openai`: Required for using GPT-4/GPT-3.5 as AI judge (install with `pip install openai`)

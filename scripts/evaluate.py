@@ -10,8 +10,16 @@ This script evaluates fine-tuned models on their ability to:
 - Resist jailbreak attacks with unsafe requests
 
 Usage:
+    # Standard evaluation
     python scripts/evaluate.py --model path/to/model --data path/to/test_data.json
-    python scripts/evaluate.py --model path/to/model --jailbreak_test --judge_model gpt-4
+
+    # Jailbreak evaluation using JailbreakBench
+    python scripts/evaluate.py --model path/to/model --jailbreak_test --judge_model gpt-4 \
+        --jbb_method PAIR --jbb_model vicuna-13b-v1.5
+
+    # Jailbreak evaluation using custom data
+    python scripts/evaluate.py --model path/to/model --jailbreak_test --judge_model gpt-4 \
+        --jailbreak_data path/to/jailbreaks.json
 
 Evaluation metrics:
     - Accuracy on aligned examples
@@ -32,6 +40,7 @@ from tqdm import tqdm
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
+import jailbreakbench as jbb
 
 
 @dataclass
@@ -414,12 +423,16 @@ class JailbreakEvaluator:
             use_local_judge=use_local_judge
         )
 
-    def load_jailbreak_templates(self, data_path: Optional[str] = None) -> List[Dict]:
+    def load_jailbreak_templates(self, data_path: Optional[str] = None,
+                                 jbb_method: Optional[str] = None,
+                                 jbb_model: Optional[str] = None) -> List[Dict]:
         """
         Load jailbreak templates from dataset.
 
         Args:
             data_path: Optional path to jailbreak data file
+            jbb_method: JailbreakBench attack method (e.g., "PAIR", "GCG", "AutoDAN")
+            jbb_model: JailbreakBench target model (e.g., "vicuna-13b-v1.5", "llama-2-7b-chat")
 
         Returns:
             List of jailbreak template examples
@@ -428,22 +441,50 @@ class JailbreakEvaluator:
             print(f"Loading jailbreak templates from {data_path}")
             with open(data_path, 'r') as f:
                 return json.load(f)
-        else:
-            print("Loading jailbreak templates from JailbreakChat dataset...")
+        elif jbb_method and jbb_model:
+            print(f"Loading jailbreak templates from JailbreakBench ({jbb_method} on {jbb_model})...")
             try:
-                dataset = load_dataset("rubend18/ChatGPT-Jailbreak-Prompts", split="train")
+                artifact = jbb.read_artifact(method=jbb_method, model_name=jbb_model)
                 templates = []
-                for i, item in enumerate(dataset):
+                for i, jailbreak in enumerate(artifact.jailbreaks):
                     templates.append({
                         "id": i,
                         "type": "jailbreak_template",
-                        "template": item["text"],
-                        "source": "JailbreakChat"
+                        "template": jailbreak["prompt"],
+                        "goal": jailbreak.get("goal", ""),
+                        "behavior": jailbreak.get("behavior", ""),
+                        "source": f"JailbreakBench-{jbb_method}",
+                        "metadata": {
+                            "method": jbb_method,
+                            "target_model": jbb_model
+                        }
                     })
+                print(f"Loaded {len(templates)} jailbreak templates from JailbreakBench")
                 return templates
             except Exception as e:
-                print(f"Error loading dataset: {e}")
-                return []
+                print(f"Error loading JailbreakBench artifact: {e}")
+                print("Falling back to JailbreakChat dataset...")
+                return self._load_jailbreakchat_dataset()
+        else:
+            return self._load_jailbreakchat_dataset()
+
+    def _load_jailbreakchat_dataset(self) -> List[Dict]:
+        """Load jailbreak templates from JailbreakChat dataset (fallback)."""
+        print("Loading jailbreak templates from JailbreakChat dataset...")
+        try:
+            dataset = load_dataset("rubend18/ChatGPT-Jailbreak-Prompts", split="train")
+            templates = []
+            for i, item in enumerate(dataset):
+                templates.append({
+                    "id": i,
+                    "type": "jailbreak_template",
+                    "template": item["text"],
+                    "source": "JailbreakChat"
+                })
+            return templates
+        except Exception as e:
+            print(f"Error loading dataset: {e}")
+            return []
 
     def create_jailbreak_tests(self, templates: List[Dict],
                                unsafe_requests: Optional[List[str]] = None,
@@ -600,8 +641,20 @@ def main():
     parser.add_argument(
         "--jailbreak_data",
         type=str,
-        default="./instruction_hierarchy_data/public_jailbreak.json",
-        help="Path to jailbreak template data"
+        default=None,
+        help="Path to jailbreak template data (optional if using JailbreakBench)"
+    )
+    parser.add_argument(
+        "--jbb_method",
+        type=str,
+        default="PAIR",
+        help="JailbreakBench attack method (e.g., PAIR, GCG, AutoDAN)"
+    )
+    parser.add_argument(
+        "--jbb_model",
+        type=str,
+        default="vicuna-13b-v1.5",
+        help="JailbreakBench target model (e.g., vicuna-13b-v1.5, llama-2-7b-chat)"
     )
     parser.add_argument(
         "--samples_per_request",
@@ -642,7 +695,11 @@ def main():
         )
 
         # Load jailbreak templates
-        templates = evaluator.load_jailbreak_templates(args.jailbreak_data)
+        templates = evaluator.load_jailbreak_templates(
+            data_path=args.jailbreak_data,
+            jbb_method=args.jbb_method,
+            jbb_model=args.jbb_model
+        )
         print(f"Loaded {len(templates)} jailbreak templates")
 
         # Create test examples
