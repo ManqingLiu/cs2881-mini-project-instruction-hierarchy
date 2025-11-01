@@ -4,3 +4,6 @@ accelerate
 datasets
 bitsandbytes
 tqdm
+peft
+wandb
+trl
