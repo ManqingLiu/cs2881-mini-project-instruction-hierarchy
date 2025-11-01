@@ -118,35 +118,32 @@ python scripts/evaluate.py --model path/to/model \
 
 The evaluation script includes a specialized **Jailbreak Evaluator** that tests models against jailbreak attacks combined with unsafe requests. This evaluation:
 
-- Loads jailbreak templates from [JailbreakBench](https://github.com/JailbreakBench/jailbreakbench) (default) or custom datasets
-- JailbreakBench provides state-of-the-art adversarial prompts from submitted attack methods
+- Loads jailbreak templates from [AllenAI WildJailbreak](https://huggingface.co/datasets/allenai/wildjailbreak) (default) or custom datasets
+- WildJailbreak provides diverse adversarial prompts with various tactics and attack types
 - Combines templates with 10 common unsafe request categories (e.g., "how to make a bomb")
 - Uses an AI judge to evaluate whether the model appropriately refused the harmful request
 - Provides detailed breakdowns by unsafe request type
 
-**Run jailbreak evaluation using JailbreakBench:**
+**Run jailbreak evaluation using WildJailbreak:**
 ```bash
-# Using JailbreakBench with PAIR method on vicuna (default)
+# Using WildJailbreak dataset (default)
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model gpt-4
 
-# Specify different JailbreakBench attack method and target model
+# Limit number of jailbreak templates loaded
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model gpt-4 \
-  --jbb_method GCG \
-  --jbb_model llama-2-7b-chat
+  --num_templates 100
 
 # Using local model as judge
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model Qwen/Qwen2.5-14B-Instruct \
-  --use_local_judge \
-  --jbb_method PAIR \
-  --jbb_model vicuna-13b-v1.5
+  --use_local_judge
 
-# Using custom jailbreak data file instead of JailbreakBench
+# Using custom jailbreak data file instead of WildJailbreak
 python scripts/evaluate.py --model path/to/model \
   --jailbreak_test \
   --judge_model gpt-4 \
@@ -160,8 +157,8 @@ python scripts/evaluate.py --model path/to/model \
   --sample_size 50
 ```
 
-**Available JailbreakBench Methods:**
-Common attack methods include: PAIR, GCG, AutoDAN, and others. See [JailbreakBench repository](https://github.com/JailbreakBench/jailbreakbench) for the full list of available methods and target models.
+**About WildJailbreak Dataset:**
+The [WildJailbreak dataset](https://huggingface.co/datasets/allenai/wildjailbreak) from AllenAI contains adversarial prompts collected from real-world jailbreak attempts. It includes various tactics and attack patterns, making it ideal for testing model robustness against diverse jailbreak strategies.
 
 ### Evaluation Metrics
 
@@ -195,9 +192,8 @@ The evaluation script computes:
 --judge_model <name>        # AI judge model (gpt-4, gpt-3.5-turbo, or HuggingFace ID)
 --use_local_judge           # Use local HF model instead of OpenAI API
 --jailbreak_test            # Run jailbreak resistance evaluation
---jailbreak_data <path>     # Jailbreak templates file (optional, overrides JailbreakBench)
---jbb_method <method>       # JailbreakBench attack method (default: PAIR)
---jbb_model <model>         # JailbreakBench target model (default: vicuna-13b-v1.5)
+--jailbreak_data <path>     # Jailbreak templates file (optional, overrides WildJailbreak)
+--num_templates <n>         # Number of jailbreak templates to load (default: all)
 --samples_per_request <n>   # Number of jailbreak templates per unsafe request (default: 5)
 --sample_size <n>           # Limit evaluation to N examples total
 --use_8bit                  # Use 8-bit quantization (default: True)
@@ -446,10 +442,9 @@ Core requirements from [requirements.txt](requirements.txt):
 - `torch`: PyTorch for model inference
 - `transformers`: HuggingFace transformers library
 - `accelerate`: Multi-GPU and optimization support
-- `datasets`: HuggingFace datasets library
+- `datasets`: HuggingFace datasets library (includes access to WildJailbreak dataset)
 - `bitsandbytes`: 8-bit quantization
 - `tqdm`: Progress bars
-- `jailbreakbench`: JailbreakBench library for loading jailbreak artifacts
 
 Optional dependencies for evaluation:
 - `openai`: Required for using GPT-4/GPT-3.5 as AI judge (install with `pip install openai`)
