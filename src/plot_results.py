@@ -29,8 +29,8 @@ from typing import Dict
 # Plotting Functions
 # ====================
 
-def plot_figure_2(baseline_results: Dict, ih_results: Dict, output_path: str):
-    """Generate Figure 2: Main Results"""
+def plot_figure_1(baseline_results: Dict, ih_results: Dict, output_path: str):
+    """Generate Figure 1: Main Results"""
 
     # Test names for Figure 2
     tests = [
