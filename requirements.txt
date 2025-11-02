@@ -7,3 +7,4 @@ tqdm
 peft
 wandb
 trl
+matplotlib
