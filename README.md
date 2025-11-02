@@ -6,7 +6,7 @@
 
 Implementation of "**The Instruction Hierarchy: Training LLMs to Prioritize Privileged Instructions**" - a method for training language models to follow system-level instructions over conflicting user inputs, improving robustness against prompt injection and jailbreak attacks.
 
-> **Note**: This implementation uses **Qwen/Qwen2.5-7B-Instruct** instead of the paper's GPT-4/Claude models due to API cost constraints, but follows the similar methodology with minor changes in fine-tuning and RL procedure.
+> **Note**: This implementation uses **Qwen/Qwen2.5-7B-Instruct** instead of the paper's GPT models due to API cost constraints, but follows the similar methodology with minor changes in fine-tuning and RL procedure.
 
 ## 📋 Overview
 
